@@ -1,0 +1,28 @@
+== wazu
+
+Wazu is a distributed job manager.
+
+== wazu cron
+
+  First, connect to the wazu cron DRB server :
+    @wc = DRbObject.new nil, "druby://localhost:6999"
+
+  Second, create a job_info as follows :
+    job_info = {"job_id" => job_id, "job_params" => ""}
+
+  Third, submit the job :
+    @wc.schedule_job_in("5", job_info)
+
+  This should run the job in 5 seconds.
+
+  To schedule a job using cron syntax :
+    @wc.schedule_cron_job("* * * * *", job_info)
+
+  This should run the job every minute as long as the wazu cron is running.
+
+  Note : The previous two remote method calls will run an existing job.
+
+  To schedule a new job immediately :
+    @wc.schedule_new_job_now("job command", "job name")
+
+  This should run the job immediately.

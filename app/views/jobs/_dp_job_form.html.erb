@@ -1,0 +1,9 @@
+<%= form_for milkyway do |f| %>
+    <div class="jobfield">
+    <%= label :rerun, "force rerun"%>
+    <%= check_box_tag :rerun, "-r" %>
+    </div>
+    <div class="actions">
+    <%= f.submit "submit" %>
+    </div>
+<% end %>

@@ -1,0 +1,9 @@
+<%= form_for :job, :url => jobs_path do |f| %>
+  <div class="field" >
+  <%= f.label :command %>
+  <%= f.text_field :command %>
+  </div>
+  <div class="actions">
+  <%= f.submit "submit" %>
+  </div>
+<% end %>

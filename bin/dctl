@@ -1,0 +1,39 @@
+#!/usr/bin//env ruby
+
+# ########################################################################## #
+# Includes and Methods
+# ########################################################################## #
+require 'rubygems'
+require 'optiflag'
+require 'daemons'
+require 'pp'
+
+def usg
+  puts "Usage : #{$0} <start|stop> <path to script> -- <script options>"
+  exit 1
+end
+
+
+# ########################################################################## #
+# Main script
+# ########################################################################## #
+usg if ARGV.size == 0
+usg unless ARGV[0] == "start" or ARGV[0] == "stop"
+
+prog = ARGV[1]
+usg unless prog
+puts "-- prog = '#{prog}'"
+raise "'#{prog}' does not exist" unless File.exists?(prog)
+raise "'#{prog}' is empty" if File.zero?(prog)
+raise "'#{prog}' is not executable" unless File.executable?(prog)
+
+log_dir = "/var/tmp"
+
+# #### #
+# This will start a process called "prog.rb" and will write a pid file
+#   and log file "prog.rb.pid" and "prog.rb.output" in /var/tmp directory.
+# Note : The :dir_mode option must also be given along with the :dir option
+#          for the :dir option to be effective or else the deault is
+#          no logging and the pid file is placed in the script directory.
+# #### #
+Daemons.run(prog,{:log_output => true, :dir => log_dir, :dir_mode => :normal})

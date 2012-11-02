@@ -1,0 +1,29 @@
+# #### #
+# Test-01
+# #### #
+development:
+  wazu_queue_host: localhost
+  wazu_queue_port: 11300
+  wazu_system_one_minute_load_threshold:     5
+  wazu_system_five_minute_load_threshold:    10
+  wazu_system_fifteen_minute_load_threshold: 10
+
+# #### #
+# Staging-01
+# #### #
+staging:
+  wazu_queue_host: 10.220.26.60
+  wazu_queue_port: 11300
+  wazu_system_one_minute_load_threshold:     40
+  wazu_system_five_minute_load_threshold:    500
+  wazu_system_fifteen_minute_load_threshold: 500
+
+# #### #
+# Production-wazu-00
+# #### #
+production:
+  wazu_queue_host: 10.122.7.3
+  wazu_queue_port: 11300
+  wazu_system_one_minute_load_threshold:     40
+  wazu_system_five_minute_load_threshold:    500
+  wazu_system_fifteen_minute_load_threshold: 500

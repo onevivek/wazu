@@ -1,0 +1,11 @@
+<% flash.each do |k, v| %>
+  <div class="flash <%= k %>">
+    <% if flash[k].respond_to?(:each) %>
+      <% flash[k].each do |e| %>
+        <div class="flashelem"><%= e %> </div>
+      <% end %>
+    <% else %>
+      <%= v %>
+    <% end %>
+  </div>
+<% end %>

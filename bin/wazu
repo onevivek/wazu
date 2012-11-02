@@ -1,0 +1,67 @@
+#!/usr/bin//env ruby
+
+# ########################################################################## #
+# Command-line parameters
+# Syntax : <script> <start|stop|run> -- --option1 --option2 ...
+# ########################################################################## #
+require 'rubygems'
+require 'optiflag'
+require 'daemons'
+require 'pp'
+
+module WazuctlFlags extend OptiFlagSet
+  usage_flag "h","help","?"
+  extended_help_flag "morehelp"
+
+  optional_flag "environment" do
+    alternate_forms "e"
+    long_form "rails_environment"
+    description "Rails environment"
+    value_matches ["Invalid environment", /^(development|staging|production)$/]
+  end
+
+  flag "program" do
+    alternate_forms "p"
+    description "Program"
+    value_matches ["Cannot be empty", /\S+/]
+  end
+
+  optional_flag "log_dir" do
+    alternate_forms "l"
+    description "Log Directory"
+    value_matches ["Cannot be empty", /\S+/]
+  end
+
+  and_process!
+end
+
+
+# ########################################################################## #
+# Main script
+# ########################################################################## #
+# #### #
+# Dump the program
+# Needs to be called as : wazuctl <start|stop|status> -- -p <prog>
+# #### #
+pp ARGV
+pp WazuctlFlags.flags
+prog = WazuctlFlags.flags.program
+puts "-- prog = '#{prog}'"
+full_prog = File.dirname(__FILE__) + "/#{prog}"
+puts "-- executable = '#{full_prog}'"
+raise "'#{full_prog}' does not exist" unless File.exists?(full_prog)
+raise "'#{full_prog}' is empty" if File.zero?(full_prog)
+raise "'#{full_prog}' is not executable" unless File.executable?(full_prog)
+log_dir = "/var/tmp"
+log_dir = WazuctlFlags.flags.log_dir unless WazuctlFlags.flags.log_dir.nil?
+puts "-- log_dir = '#{log_dir}'"
+raise "'#{log_dir}' is not a directory" unless File.directory?(log_dir)
+
+# #### #
+# This will start a process called "prog.rb" and will write a pid file
+#   and log file "prog.rb.pid" and "prog.rb.output" in /tmp directory.
+# Note : The :dir_mode option must also be given along with the :dir option
+#          for the :dir option to be effective or else the deault is
+#          no logging and the pid file is placed in the script directory.
+# #### #
+Daemons.run(full_prog,{:log_output => true, :dir => log_dir, :dir_mode => :normal})

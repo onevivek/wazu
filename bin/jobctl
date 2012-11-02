@@ -1,0 +1,117 @@
+#!/usr/bin/env ruby
+
+
+# ########################################################################## #
+# Includes
+# ########################################################################## #
+require 'rubygems'
+require 'optiflag'
+require 'drb'
+require 'pp'
+require 'beanstalk-client'
+
+
+# ########################################################################## #
+# Command-line parameters
+# ########################################################################## #
+module JobctlFlags extend OptiFlagSet
+  usage_flag "h","help","?"
+  extended_help_flag "morehelp"
+
+  optional_flag "environment" do
+    alternate_forms "e"
+    long_form "rails_environment"
+    description "Rails environment"
+    value_matches ["Invalid environment",/^(development|staging|production)$/]
+  end
+
+  flag "execute_job" do
+    alternate_forms "x"
+    description "Execute Job"
+    value_matches ["Invalid execute option", /^(cron|dispatch|enqueue)$/]
+  end
+
+  optional_flag "execute_params" do
+    alternate_forms "p"
+    description "Execute Params"
+    value_matches ["Invalid Job params", /\S+/]
+  end
+
+  optional_flag "job_id" do
+    alternate_forms "j"
+    description "Job ID"
+    value_matches ["Must be a positive integer", /^\d+$/]
+  end
+
+  optional_switch_flag "new_job" do
+    alternate_forms "n"
+    long_form "new_job"
+    description "New Job"
+  end
+
+  optional_flag "job_command" do
+    alternate_forms "c"
+    description "Job Command"
+    value_matches ["Cannot be empty", /\S+/]
+  end
+
+  and_process!
+end
+flags = JobctlFlags.flags
+
+# #### #
+# Set the environment
+# #### #
+unless flags.environment.nil? then
+  ENV['RAILS_ENV'] = flags.environment
+  puts "'#{ENV['RAILS_ENV']}'"
+end
+require File.dirname(__FILE__) + "/../config/environment.rb"
+
+
+# ########################################################################## #
+# Main script
+# ########################################################################## #
+# #### #
+# Params check
+# #### #
+raise "Must give either -j or -n option" if flags.new_job.nil? and flags.job_id.nil?
+
+# #### #
+# Create new job
+# #### #
+job_id = nil
+if flags.new_job.nil? then
+  job_id = flags.job_id
+else
+  raise "Must give job command" if flags.job_command.nil?
+  params = {:command => flags.job_command}
+  job = Job.new(params)
+  job.save
+  job_id = job.id
+end
+raise "No Job ID" if job_id.nil?
+
+# #### #
+# Execute Job
+# #### #
+job_info = {"job_id" => job_id, "job_params" => flags.execute_params}
+if flags.execute_job == "cron" then
+  puts "Job to be cronned - #{job_id}"
+  if @wc.nil? then
+    @wc = DRbObject.new nil, "druby://localhost:6999"
+  end
+  @wc.schedule_job_in("5", job_info)
+elsif flags.execute_job == "dispatch" then
+  puts "Job to be dispatched - #{job_id}"
+  if @ws.nil? then
+    @ws = DRbObject.new nil, "druby://localhost:7000"
+  end
+  @ws.dispatch_job(job_info)
+elsif flags.execute_job == "enqueue" then
+  puts "Job to be enqueued - #{job_id}"
+  if @beanstalk.nil? then
+    @beanstalk = Beanstalk::Pool.new(['localhost:11300'])
+  end
+  @beanstalk.yput(job_info)
+end
